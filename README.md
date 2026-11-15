@@ -51,6 +51,29 @@ npm start          # http://localhost:3000
 Environment variables: `PORT` (default 3000), `HOST`, `DB_PATH` (default `server/data/spacebound.db`),
 `CLIENT_DIST`.
 
+## Hosting on Pterodactyl
+
+An egg is included at [`pterodactyl/egg-spacebound.json`](pterodactyl/egg-spacebound.json).
+
+1. **Admin → Nests → Import Egg**, upload `egg-spacebound.json` and pick a nest (or create a "Spacebound" nest).
+2. **Servers → Create New**, choose the Spacebound egg, assign **one port** (the game serves both the website and the WebSocket on it), ~512 MB RAM and ~1 GB disk (the install step needs room for dependencies).
+3. Let the installer finish (it clones the repo, installs dependencies and builds), then press **Start**.
+   The console shows `server listening on …` once it's ready.
+4. Players open `http://<node-ip>:<port>` in a browser.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| Git Repository | `https://github.com/IhleMa/spacebound.git` | Where the code is installed from |
+| Branch | `main` | Branch to install/update |
+| Auto Update | `0` | `1` = pull, rebuild and apply the latest commit on every start |
+| Git Username / Access Token | empty | Only needed if the repository is private |
+
+Updating: either set **Auto Update = 1** and restart, or use **Settings → Reinstall Server**.
+Both keep the player database in `server/data/`. Stopping the server from the panel saves all online players first.
+Back up `server/data/spacebound.db` to back up all accounts and progress.
+
+For HTTPS, put the port behind a reverse proxy (nginx, Caddy, Cloudflare Tunnel) – the client automatically uses `wss://` when loaded over HTTPS.
+
 ## Development
 
 ```bash
