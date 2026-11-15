@@ -1,5 +1,5 @@
 #!/bin/bash
-# Spacebound – Pterodactyl installation script.
+# Spacebound - Pterodactyl installation script.
 # Runs inside the install container (node:22-bookworm-slim) with the server's files mounted at /mnt/server.
 # Re-running it ("Reinstall Server") updates the code but keeps the database in server/data/.
 set -euo pipefail
@@ -28,14 +28,14 @@ mkdir -p "$INSTALL_DIR"
 cd "$INSTALL_DIR"
 
 if [ -d .git ]; then
-  echo ">> Existing installation found – updating to latest ${BRANCH}"
+  echo ">> Existing installation found - updating to latest ${BRANCH}"
   git fetch --depth 1 "$REPO_URL" "$BRANCH"
   git reset --hard FETCH_HEAD
 elif [ -z "$(ls -A . 2>/dev/null)" ]; then
   echo ">> Cloning ${GIT_ADDRESS} (${BRANCH})"
   git clone --depth 1 --branch "$BRANCH" "$REPO_URL" .
 else
-  echo ">> Directory not empty – cloning into a temp folder and copying over (existing files are kept)"
+  echo ">> Directory not empty - cloning into a temp folder and copying over (existing files are kept)"
   rm -rf /tmp/spacebound-src
   git clone --depth 1 --branch "$BRANCH" "$REPO_URL" /tmp/spacebound-src
   cp -a /tmp/spacebound-src/. .
