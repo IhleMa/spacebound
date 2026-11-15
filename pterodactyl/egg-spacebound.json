@@ -1,0 +1,82 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-11-15T02:45:00+01:00",
+    "name": "Spacebound",
+    "author": "IhleMa",
+    "description": "Spacebound – a persistent multiplayer space idle MMO. Runs the authoritative game server (Node.js + WebSocket + SQLite) and serves the browser client on the allocated port. Players connect with a browser at http://<server-ip>:<port>.",
+    "features": null,
+    "docker_images": {
+        "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22"
+    },
+    "file_denylist": [],
+    "startup": "bash pterodactyl/start.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\"done\": \"server listening on\"}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# Spacebound – Pterodactyl installation script.\n# Runs inside the install container (node:22-bookworm-slim) with the server's files mounted at /mnt/server.\n# Re-running it (\"Reinstall Server\") updates the code but keeps the database in server/data/.\nset -euo pipefail\n\nINSTALL_DIR=\"${INSTALL_DIR:-/mnt/server}\"\nGIT_ADDRESS=\"${GIT_ADDRESS:-https://github.com/IhleMa/spacebound.git}\"\nBRANCH=\"${BRANCH:-main}\"\n\nneed=()\ncommand -v git >/dev/null || need+=(git)\ncommand -v make >/dev/null || need+=(make)\ncommand -v g++ >/dev/null || need+=(g++)\ncommand -v python3 >/dev/null || need+=(python3)\nif [ ${#need[@]} -gt 0 ]; then\n  apt-get update\n  apt-get install -y --no-install-recommends ca-certificates \"${need[@]}\"\nfi\n\n[[ \"$GIT_ADDRESS\" == *.git ]] || GIT_ADDRESS=\"${GIT_ADDRESS}.git\"\nREPO_URL=\"$GIT_ADDRESS\"\nif [ -n \"${USERNAME:-}\" ] && [ -n \"${ACCESS_TOKEN:-}\" ]; then\n  REPO_URL=\"https://${USERNAME}:${ACCESS_TOKEN}@${GIT_ADDRESS#https://}\"\nfi\n\nmkdir -p \"$INSTALL_DIR\"\ncd \"$INSTALL_DIR\"\n\nif [ -d .git ]; then\n  echo \">> Existing installation found – updating to latest ${BRANCH}\"\n  git fetch --depth 1 \"$REPO_URL\" \"$BRANCH\"\n  git reset --hard FETCH_HEAD\nelif [ -z \"$(ls -A . 2>/dev/null)\" ]; then\n  echo \">> Cloning ${GIT_ADDRESS} (${BRANCH})\"\n  git clone --depth 1 --branch \"$BRANCH\" \"$REPO_URL\" .\nelse\n  echo \">> Directory not empty – cloning into a temp folder and copying over (existing files are kept)\"\n  rm -rf /tmp/spacebound-src\n  git clone --depth 1 --branch \"$BRANCH\" \"$REPO_URL\" /tmp/spacebound-src\n  cp -a /tmp/spacebound-src/. .\n  rm -rf /tmp/spacebound-src\nfi\n# Never leave credentials in the git config.\ngit remote set-url origin \"$GIT_ADDRESS\" 2>/dev/null || git remote add origin \"$GIT_ADDRESS\"\ngit config --global --add safe.directory \"$INSTALL_DIR\" || true\n\necho \">> Installing dependencies\"\nnpm ci --no-audit --no-fund\n\necho \">> Building client and server\"\nnpm run build\n\nmkdir -p server/data\necho \">> Spacebound installed successfully\"\n",
+            "container": "node:22-bookworm-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Git Repository",
+            "description": "Git repository to install Spacebound from.",
+            "env_variable": "GIT_ADDRESS",
+            "default_value": "https://github.com/IhleMa/spacebound.git",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:255",
+            "field_type": "text"
+        },
+        {
+            "name": "Branch",
+            "description": "Git branch to install and update from.",
+            "env_variable": "BRANCH",
+            "default_value": "main",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Update",
+            "description": "Pull, rebuild and apply the latest version from Git on every start (1 = on, 0 = off). Your database in server/data is kept.",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Username",
+            "description": "Only needed if the repository is private.",
+            "env_variable": "USERNAME",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Access Token",
+            "description": "GitHub personal access token (read access to the repository). Only needed if the repository is private.",
+            "env_variable": "ACCESS_TOKEN",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "nullable|string|max:255",
+            "field_type": "text"
+        }
+    ]
+}
